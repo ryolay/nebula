@@ -9,9 +9,16 @@ try { pty = require('node-pty'); } catch (e) { pty = null; console.error('node-p
 const sessions = new Map(); // id → { proc, repo, sender }
 let seq = 0;
 
+/** The user's shell and its arguments: a login shell on macOS/Linux, PowerShell (or cmd) on Windows. */
 function userShell() {
-  const candidates = [process.env.SHELL, (() => { try { return os.userInfo().shell; } catch { return null; } })(), '/bin/zsh', '/bin/bash'];
-  return candidates.find((s) => s && fs.existsSync(s));
+  if (process.platform === 'win32') {
+    const sys = process.env.SystemRoot || 'C:\\Windows';
+    const pwsh = [process.env.NEBULA_SHELL, path.join(process.env.ProgramFiles || 'C:\\Program Files', 'PowerShell', '7', 'pwsh.exe'), path.join(sys, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')]
+      .find((s) => s && fs.existsSync(s));
+    return { file: pwsh || process.env.ComSpec || 'cmd.exe', args: pwsh ? ['-NoLogo'] : [] };
+  }
+  const candidates = [process.env.SHELL, (() => { try { return os.userInfo().shell; } catch { return null; } })(), '/bin/zsh', '/bin/bash', '/bin/sh'];
+  return { file: candidates.find((s) => s && fs.existsSync(s)), args: ['-l'] };
 }
 
 /** Start a shell in `cwd`. Output and exit are pushed to `sender` (a webContents). */
@@ -22,7 +29,7 @@ function create({ cwd, cols = 100, rows = 24, sender }) {
   const env = { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor', TERM_PROGRAM: 'Nebula', LANG: process.env.LANG || 'en_US.UTF-8' };
   delete env.ELECTRON_RUN_AS_NODE;
   for (const k of Object.keys(env)) if (k.startsWith('NEBULA_')) delete env[k]; // never leak test/dev switches into user shells
-  const proc = pty.spawn(shell, ['-l'], { name: 'xterm-256color', cols: Math.max(20, cols | 0), rows: Math.max(5, rows | 0), cwd, env });
+  const proc = pty.spawn(shell.file, shell.args, { name: 'xterm-256color', cols: Math.max(20, cols | 0), rows: Math.max(5, rows | 0), cwd, env });
   const id = ++seq;
   sessions.set(id, { proc, repo: cwd, sender });
   proc.onData((data) => { if (!sender.isDestroyed()) sender.send('term:data', { id, data }); });
@@ -30,7 +37,7 @@ function create({ cwd, cols = 100, rows = 24, sender }) {
     sessions.delete(id);
     if (!sender.isDestroyed()) sender.send('term:exit', { id, code: exitCode });
   });
-  return { id, shell: path.basename(shell), cwd };
+  return { id, shell: path.basename(shell.file).replace(/\.exe$/i, ''), cwd };
 }
 
 const get = (id) => sessions.get(id) || null;

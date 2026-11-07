@@ -553,7 +553,7 @@ test('push without any remote gives a clear error', async () => {
 const ghRoute = { provider: 'github', remote: { host: 'github.com', protocol: 'https', scheme: 'https', path: 'acme/demo' }, token: 'tok-routed', account: { id: 'github:github.com/work' } };
 test.beforeEach(() => git.setAuthResolver(async () => ghRoute));
 test.after(() => git.setAuthResolver(null));
-test('PRs: list parses gh JSON and asks for the right fields', async () => {
+test('PRs: list parses gh JSON and asks for the right fields', { skip: H.POSIX_ONLY }, async () => {
   const { work } = H.withRemote();
   await git.open(work);
   H.resetGh();
@@ -578,7 +578,7 @@ test('PRs: repo without a GitHub/GitLab remote says so', async () => {
   assert.match(r.error, /No GitHub or GitLab remote/);
 });
 
-test('PRs: gh failure is reported as unavailable, not thrown', async () => {
+test('PRs: gh failure is reported as unavailable, not thrown', { skip: H.POSIX_ONLY }, async () => {
   H.resetGh();
   fs.writeFileSync(H.GH_FAIL, '1');
   const r = await git.prs();
@@ -587,7 +587,7 @@ test('PRs: gh failure is reported as unavailable, not thrown', async () => {
   H.resetGh();
 });
 
-test('PRs: create / checkout / merge pass safe arguments to gh', async () => {
+test('PRs: create / checkout / merge pass safe arguments to gh', { skip: H.POSIX_ONLY }, async () => {
   H.resetGh();
   await git.prCreate({ title: 'My PR; rm -rf ~', body: 'Body\nline 2', base: 'main', draft: true });
   await git.prCheckout({ number: '17abc' });

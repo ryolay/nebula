@@ -44,7 +44,7 @@
   --radius: var(--r-lg);
   --shadow-pop: 0 10px 30px rgba(var(--sink), calc(.45 * var(--sink-k))), 0 0 0 1px rgba(var(--ink), calc(.04 * var(--ink-k)));
   --row-h: 36px;
-  --mono: 'SF Mono', ui-monospace, Menlo, monospace;
+  --mono: 'SF Mono', ui-monospace, Menlo, Consolas, 'Cascadia Mono', 'DejaVu Sans Mono', 'Ubuntu Mono', monospace;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
@@ -79,7 +79,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
 body {
-  font: 13px/1.4 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', 'Inter', Ubuntu, Cantarell, 'Noto Sans', sans-serif;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
@@ -113,6 +113,9 @@ button, input, textarea { font: inherit; color: inherit; }
 .tabbar { height: 40px; display: flex; align-items: flex-end; gap: 2px; padding: 0 10px 0 0; position: relative; }
 .tab-drag { -webkit-app-region: drag; align-self: stretch; }
 .tab-traffic { width: 84px; flex: none; }
+/* Windows/Linux: no traffic lights on the left; the native window controls sit on the right. */
+[data-platform="win32"] .tab-traffic, [data-platform="linux"] .tab-traffic { width: 10px; }
+[data-platform="win32"] .tabbar, [data-platform="linux"] .tabbar { padding-right: 140px; }
 .tab-fill { flex: 1; min-width: 40px; }
 .tabs { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; align-items: flex-end; }
 .tabs::-webkit-scrollbar { display: none; }
@@ -519,7 +522,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .dl.add { background: color-mix(in srgb, var(--green) 9%, transparent); } .dl.add .c { color: var(--text); } .dl.add .c::before { content: '+'; color: var(--green); position: absolute; margin-left: -9px; }
 .dl.del { background: color-mix(in srgb, var(--red) 9%, transparent); } .dl.del .c { color: var(--text); } .dl.del .c::before { content: '−'; color: var(--red); position: absolute; margin-left: -9px; }
 .dl.add .n { color: var(--green); } .dl.del .n { color: var(--red); }
-.diff-empty { padding: 50px; text-align: center; color: var(--text-3); font-family: -apple-system, sans-serif; }
+.diff-empty { padding: 50px; text-align: center; color: var(--text-3); font-family: inherit; }
 
 /* ---------- modal ---------- */
 .modal-wrap { position: fixed; inset: 0; background: rgba(3,4,10,.55); display: grid; place-items: center; z-index: 50; animation: fadeIn .15s; backdrop-filter: blur(4px); }
@@ -864,7 +867,7 @@ body.dragging-folder .lp-drop { display: flex; position: absolute; inset: 14px; 
 .rz-take { margin: 0 12px 12px; align-self: flex-start; }
 .rz-side.theirs .rz-take { background: linear-gradient(135deg, #db2777, #a855f7); box-shadow: 0 6px 18px color-mix(in srgb, var(--theirs) 35%, transparent); }
 .rz-result { padding: 6px 12px 10px; background: color-mix(in srgb, var(--green) 5%, transparent); }
-.rz-whole { max-width: 520px; margin: 60px auto; text-align: center; font-family: -apple-system, sans-serif; }
+.rz-whole { max-width: 520px; margin: 60px auto; text-align: center; font-family: inherit; }
 .rz-whole-ic { width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 16px; display: grid; place-items: center; background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber); }
 .rz-whole-ic .i { width: 24px; height: 24px; }
 .rz-whole h3 { margin: 0 0 6px; font: 600 15px var(--mono); }
@@ -919,7 +922,7 @@ body.dragging-folder .lp-drop { display: flex; position: absolute; inset: 14px; 
 
 /* history + blame */
 .hist { display: grid; grid-template-columns: 340px 1fr; height: 100%; }
-.hist-list { overflow: auto; border-right: 1px solid var(--line); padding: 6px; font-family: -apple-system, sans-serif; }
+.hist-list { overflow: auto; border-right: 1px solid var(--line); padding: 6px; font-family: inherit; }
 .hist-c { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 9px; cursor: pointer; }
 .hist-c:hover { background: rgba(var(--ink), calc(.05 * var(--ink-k))); }
 .hist-c.on { background: color-mix(in srgb, var(--accent) 20%, transparent); }

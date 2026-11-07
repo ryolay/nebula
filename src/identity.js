@@ -9,8 +9,15 @@ const { gitAt } = require('./git');
 const PALETTE = ['#8b5cf6', '#22d3ee', '#f472b6', '#a3e635', '#fbbf24', '#fb7185', '#2dd4bf', '#60a5fa'];
 const FREEMAIL = /^(gmail|googlemail|outlook|hotmail|live|icloud|me|mac|yahoo|proton|protonmail|pm|gmx|hey|fastmail|aol)\./i;
 const home = () => os.homedir();
-const expand = (p) => (p ? p.replace(/^~(?=$|\/)/, home()) : p);
-const tilde = (p) => (p && p.startsWith(`${home()}/`) ? `~${p.slice(home().length)}` : p);
+// Git config and OpenSSH accept forward slashes everywhere, including on Windows.
+const slash = (p) => (process.platform === 'win32' && p ? p.replace(/\\/g, '/') : p);
+const expand = (p) => (p ? p.replace(/^~(?=$|[\\/])/, home()) : p);
+const tilde = (p) => { const s = slash(p); const h = slash(home()); return s && s.startsWith(`${h}/`) ? `~${s.slice(h.length)}` : s; };
+/** Same file? Resolves symlinks and Windows short (8.3) names; case-insensitive on Windows. */
+function samePath(a, b) {
+  const norm = (p) => { let r; try { r = fs.realpathSync.native(p); } catch { r = path.resolve(p); } return process.platform === 'win32' ? r.toLowerCase() : r; };
+  return norm(a) === norm(b);
+}
 const globalConfigPath = () => process.env.GIT_CONFIG_GLOBAL || path.join(home(), '.gitconfig');
 
 // ---------- remotes ----------
@@ -48,8 +55,10 @@ async function effective(repo) {
     const out = (await gitAt(repo, ['config', '--show-origin', '--show-scope', '--get', key], { ok: [0, 1] })).replace(/\n$/, '');
     if (!out) return null;
     const [scope, origin, ...v] = out.split('\t');
-    const file = origin.replace(/^file:/, '');
-    return { scope, file: tilde(file), value: v.join('\t'), included: scope === 'global' && path.resolve(expand(file)) !== path.resolve(globalConfigPath()) };
+    // git C-quotes origins with special characters, e.g. file:"C:\\Users\\me\\.gitconfig" on Windows
+    const raw = origin.replace(/^file:/, '');
+    const file = raw.startsWith('"') ? raw.slice(1, -1).replace(/\\(.)/g, '$1') : raw;
+    return { scope, file: tilde(file), value: v.join('\t'), included: scope === 'global' && !samePath(expand(file), globalConfigPath()) };
   };
   const [name, email, signingKey, gpgsign, pinned] = await Promise.all(['user.name', 'user.email', 'user.signingkey', 'commit.gpgsign', 'nebula.identity'].map(get));
   return { name, email, signingKey, sign: gpgsign?.value === 'true', profileId: pinned?.value || null };
@@ -152,9 +161,12 @@ function matchRemote(pattern, remote) {
   const pat = pattern.replace(/^https?:\/\//i, '').replace(/\.git$/i, '').replace(/\/+$/, '');
   return glob(pat).test(`${remote.host}/${remote.path}`);
 }
+// macOS (APFS) and Windows (NTFS) compare paths case-insensitively by default; Linux does not.
+const CASE_INSENSITIVE_FS = process.platform !== 'linux';
 function matchFolder(folder, repoPath) {
-  const f = path.resolve(expand(folder)).toLowerCase().replace(/\/+$/, '');
-  const r = path.resolve(repoPath).toLowerCase();
+  const norm = (p) => { const s = path.resolve(p).replace(/\\/g, '/'); return CASE_INSENSITIVE_FS ? s.toLowerCase() : s; };
+  const f = norm(expand(folder)).replace(/\/+$/, '');
+  const r = norm(repoPath);
   return r === f || r.startsWith(`${f}/`);
 }
 function suggest(profiles, repoPath, remote) {

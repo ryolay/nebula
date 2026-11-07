@@ -22,6 +22,7 @@ npm start
 - **Destructive actions are undoable or confirmed.** If you add one, register an undo step or ask for confirmation.
 - **No new runtime dependencies** without a good reason; the renderer is plain JavaScript on purpose.
 - Use the design tokens in `styles.css` (`--ink`, `--accent`, radii, spacing) instead of hard-coded colours, and keep text contrast at WCAG AA.
+- Nebula runs on macOS, Windows and Linux: build paths with `path.join`, use `modKey(e)` for shortcuts and write shortcut labels as `⌘⇧P` (they become `Ctrl+Shift+P` on other systems).
 - Write code, comments, UI copy and commit messages in English.
 
 ## Reporting bugs

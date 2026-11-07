@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('nebula', {
+  platform: process.platform,
   git: async (name, args, repo) => {
     const r = await ipcRenderer.invoke('git', name, args, repo);
     if (r.error) throw new Error(r.error);

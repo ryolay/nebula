@@ -9,7 +9,7 @@ const accountById = (id) => S.id?.accounts?.find((a) => a.id === id) || null;
 const dot = (p, cls = '') => `<span class="id-dot ${cls}" style="--c:${p?.color || '#6b6f94'}">${esc(initials(p?.label || p?.name || '?'))}</span>`;
 const PROVIDER = { github: 'GitHub', gitlab: 'GitLab' };
 // "inside ~/x" → "This repo is inside ~/x"; "remote matches a/*" → "This repo's remote matches a/*"
-const shortPath = (p) => { if (!p || p.length <= 34) return p; const parts = p.replace(/\/+$/, '').split('/'); return `…/${parts.slice(-2).join('/')}`; };
+const shortPath = (p) => { if (!p || p.length <= 34) return p; const parts = p.replace(/[\\/]+$/, '').split(/[\\/]/); return `…/${parts.slice(-2).join('/')}`; };
 const why = (r) => (r.startsWith('remote ') ? `This repo’s remote ${r.slice(7)}` : `This repo is inside ${shortPath(r.replace(/^inside /, ''))}`);
 
 async function loadIdentity() {
@@ -25,7 +25,7 @@ function currentIdentity() {
   if (!eff) return null;
   const profile = profileById(S.id.currentProfileId);
   const scope = eff.email?.scope;
-  const source = !eff.email ? 'not set' : scope === 'local' ? 'this repo' : eff.email.included ? eff.email.file.split('/').pop() : scope === 'global' ? 'global default' : scope;
+  const source = !eff.email ? 'not set' : scope === 'local' ? 'this repo' : eff.email.included ? eff.email.file.split(/[\\/]/).pop() : scope === 'global' ? 'global default' : scope;
   return { profile, name: eff.name?.value || '', email: eff.email?.value || '', source, scope };
 }
 
@@ -164,7 +164,7 @@ function identitiesTab() {
         ${p.folders.map((f) => `<span class="chip" title="Every repo in ${esc(f)}">${icon('folder')}${esc(shortPath(f))}</span>`).join('')}
         ${p.remotes.map((r) => `<span class="chip">${icon('branch')}${esc(r)}</span>`).join('')}
         ${p.signingKey ? `<span class="chip">${icon('check')}signed</span>` : ''}
-        ${p.importedFrom ? `<span class="chip dim" title="Imported from ${esc(p.importedFrom)}">${esc(p.importedFrom.split('/').pop())}</span>` : ''}
+        ${p.importedFrom ? `<span class="chip dim" title="Imported from ${esc(p.importedFrom)}">${esc(p.importedFrom.split(/[\\/]/).pop())}</span>` : ''}
       </div>
       <div class="id-actions">
         ${S.info ? `<button class="btn sm" data-use-profile="${p.id}">Use in this repo</button>` : ''}
@@ -222,7 +222,7 @@ function accountsTab() {
   const login = ID.login;
   return `
   <section class="card">
-    <div class="card-h"><span class="prov">${brand('github')}GitHub</span><small>via the GitHub CLI · tokens stay in the macOS keychain</small></div>
+    <div class="card-h"><span class="prov">${brand('github')}GitHub</span><small>via the GitHub CLI · tokens stay in gh's secure storage</small></div>
     ${gh.map(row).join('') || '<p class="hint">No GitHub account yet.</p>'}
     ${login ? `<div class="device">
         ${login.code ? `<p>Enter this code on GitHub:</p><div class="code">${esc(login.code)}</div>
@@ -233,7 +233,7 @@ function accountsTab() {
           <button class="btn" data-gh-login-enterprise>GitHub Enterprise…</button></div>`}
   </section>
   <section class="card">
-    <div class="card-h"><span class="prov">${brand('gitlab')}GitLab</span><small>gitlab.com or self-managed · personal access token, encrypted with the keychain</small></div>
+    <div class="card-h"><span class="prov">${brand('gitlab')}GitLab</span><small>gitlab.com or self-managed · personal access token, encrypted by the system keychain</small></div>
     ${gl.map(row).join('') || '<p class="hint">No GitLab account yet.</p>'}
     <form class="gl-form" id="glForm">
       <input class="field" name="baseUrl" value="https://gitlab.com" spellcheck="false">

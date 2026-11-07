@@ -4,7 +4,10 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'nebula-test-'));
+// realpath.native: Windows hands out 8.3 short temp paths (RUNNER~1) that git reports in long form.
+const ROOT = fs.mkdtempSync(path.join(fs.realpathSync.native(os.tmpdir()), 'nebula-test-'));
+// The fake gh/ssh binaries are scripts with a shebang, which Windows cannot execute directly.
+const POSIX_ONLY = process.platform === 'win32' ? 'fake gh/ssh binaries need a POSIX system' : false;
 
 // Isolate from the developer's ~/.gitconfig (hooks, signing, aliases…).
 const gitconfig = path.join(ROOT, 'gitconfig');
@@ -133,7 +136,7 @@ process.stderr.write('git@' + target + ': Permission denied (publickey).\\n'); p
 `, { mode: 0o755 });
 const SSH_DIR = path.join(ROOT, 'dot-ssh');
 process.env.NEBULA_SSH_DIR = SSH_DIR;
-process.env.PATH = `${binDir}:${process.env.PATH}`;
+process.env.PATH = `${binDir}${path.delimiter}${process.env.PATH}`;
 
 const ghLog = () => (fs.existsSync(GH_LOG) ? fs.readFileSync(GH_LOG, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 const ghCalls = () => ghLog().map((l) => l.argv).filter((a) => a[0] !== 'auth');
@@ -205,4 +208,5 @@ const write = (cwd, f, content) => { const p = path.join(cwd, f); fs.mkdirSync(p
 const read = (cwd, f) => fs.readFileSync(path.join(cwd, f), 'utf8');
 const exists = (cwd, f) => fs.existsSync(path.join(cwd, f));
 
-module.exports = { ROOT, sh, commit, initRepo, withRemote, tmpDir, write, read, exists, ghCalls, ghLog, resetGh, setGhAccounts, ghAccounts, ghIssues, setSshUsers, SSH_DIR, GH_JSON, GH_FAIL, GH_APPROVE, PEOPLE };
+module.exports = {
+  POSIX_ONLY, ROOT, sh, commit, initRepo, withRemote, tmpDir, write, read, exists, ghCalls, ghLog, resetGh, setGhAccounts, ghAccounts, ghIssues, setSshUsers, SSH_DIR, GH_JSON, GH_FAIL, GH_APPROVE, PEOPLE };

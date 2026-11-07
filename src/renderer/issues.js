@@ -160,6 +160,6 @@ function bindIssues() {
     const close = $('[data-issue-act="close"]');
     if (close) close.lastChild.textContent = has ? 'Close with comment' : 'Close issue';
   });
-  document.addEventListener('keydown', (e) => { if (e.target.id === 'issueReply' && e.key === 'Enter' && e.metaKey) { e.preventDefault(); $('[data-issue-act="comment"]:not([disabled])')?.click(); } });
+  document.addEventListener('keydown', (e) => { if (e.target.id === 'issueReply' && e.key === 'Enter' && modKey(e)) { e.preventDefault(); $('[data-issue-act="comment"]:not([disabled])')?.click(); } });
 }
 bindIssues();
