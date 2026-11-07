@@ -1,0 +1,17 @@
+---
+# Codacy configuration — https://docs.codacy.com/repositories-configure/codacy-configuration-file/
+# ESLint picks up eslint.config.js from the repository root
+# (enable "Use configuration file" for ESLint in Codacy's Code patterns page).
+engines:
+  eslint:
+    enabled: true
+  duplication:
+    enabled: true
+    exclude_paths:
+      - "tests/**"
+exclude_paths:
+  - "dist/**"
+  - "node_modules/**"
+  - "docs/**"
+  - "src/renderer/fonts/**"
+  - "package-lock.json"
