@@ -219,7 +219,7 @@ function bindPr() {
   document.addEventListener('keydown', (e) => {
     if ($('#prWrap').hidden) return;
     if (e.key === 'Escape' && $('#popover').hidden) { e.stopPropagation(); closePr(); }
-    if (e.key === 'Enter' && e.metaKey && !$('#prCreate')?.disabled) { e.preventDefault(); submitPr(); }
+    if (e.key === 'Enter' && modKey(e) && !$('#prCreate')?.disabled) { e.preventDefault(); submitPr(); }
   }, true);
 }
 bindPr();

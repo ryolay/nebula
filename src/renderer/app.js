@@ -110,7 +110,7 @@ function modal({ title, iconName = 'sparkle', text, fields = [], ok = 'OK' }) {
       fields.forEach((f) => { const el = form.elements[f.name]; v[f.name] = f.type === 'checkbox' ? el.checked : el.value.trim(); });
       done(v);
     };
-    form.querySelectorAll('textarea').forEach((t) => t.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.metaKey) form.requestSubmit(); }));
+    form.querySelectorAll('textarea').forEach((t) => t.addEventListener('keydown', (e) => { if (e.key === 'Enter' && modKey(e)) form.requestSubmit(); }));
     setTimeout(() => form.querySelector('input.field, textarea')?.focus(), 30);
   });
 }
@@ -178,9 +178,9 @@ function renderEmpty() {
   $('#graphHead').style.display = 'none';
   $('#graphScroll').style.display = 'none';
   api.state().then((st) => {
-    $('#recentList').innerHTML = (st.recent || []).slice(0, 6).map((p) => `<button data-path="${esc(p)}"><b>${esc(p.split('/').pop())}</b><small>${esc(p)}</small></button>`).join('');
+    $('#recentList').innerHTML = (st.recent || []).slice(0, 6).map((p) => `<button data-path="${esc(p)}"><b>${esc(p.split(/[\\/]/).pop())}</b><small>${esc(p)}</small></button>`).join('');
   });
-  $('#detail').innerHTML = `<div class="d-head"><div class="d-kicker">Nebula</div><p class="d-body">Open a repository with ⌘O, or drag a folder onto the window.</p></div>`;
+  $('#detail').innerHTML = `<div class="d-head"><div class="d-kicker">Nebula</div><p class="d-body">Open a repository with ${keys('⌘O')}, or drag a folder onto the window.</p></div>`;
   $('#sideScroll').innerHTML = '';
 }
 
@@ -474,7 +474,7 @@ function renderWip() {
     };
     const submit = () => doCommit();
     $('#cGo').onclick = submit;
-    [sum, body].forEach((el) => el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || el === sum)) { e.preventDefault(); submit(); } }));
+    [sum, body].forEach((el) => el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (modKey(e) || el === sum)) { e.preventDefault(); submit(); } }));
   }
   updateComposer();
   if (typeof renderIdentityBar === 'function') renderIdentityBar();
@@ -717,7 +717,7 @@ async function refMenu(kind, name) {
     const sha = S.refs.local.find((b) => b.name === name)?.oid;
     const undo = { kind: 'branchDelete', name, sha, label: `delete ${name}` };
     const r = await act(`Deleted ${name}`, () => G('deleteBranch', { name }), { quiet: false, undo });
-    if (!r && await confirmDanger(`${name} is not fully merged. Force delete?`, 'You can still undo this right after (⌘Z).', 'Force delete')) act(`Deleted ${name}`, () => G('deleteBranch', { name, force: true }), { undo });
+    if (!r && await confirmDanger(`${name} is not fully merged. Force delete?`, `You can still undo this right after (${keys('⌘Z')}).`, 'Force delete')) act(`Deleted ${name}`, () => G('deleteBranch', { name, force: true }), { undo });
   } else if (id === 'deleteRemote') { if (await confirmDanger(`Delete ${name} on the remote?`, 'This affects everyone using this remote.', 'Delete remote branch')) act(`Deleted ${name}`, () => G('deleteRemoteBranch', { name })); }
   else if (id === 'deleteTag') { if (await confirmDanger(`Delete tag ${name}?`, 'Only the local tag is deleted.', 'Delete')) act(`Deleted tag ${name}`, () => G('deleteTag', { name })); }
   else if (id === 'copy') { api.copy(name); toast('ok', 'Copied', name); }
@@ -831,7 +831,7 @@ function bind() {
     }
     if (it.dataset.kind === 'worktree') {
       e.preventDefault();
-      const w = await api.menu([{ id: 'open', label: 'Open in a new tab' }, { id: 'reveal', label: 'Reveal in Finder' }, { type: 'separator' }, { id: 'remove', label: 'Remove worktree' }]);
+      const w = await api.menu([{ id: 'open', label: 'Open in a new tab' }, { id: 'reveal', label: `Reveal in ${FILE_MANAGER}` }, { type: 'separator' }, { id: 'remove', label: 'Remove worktree' }]);
       if (w === 'open') openTab(it.dataset.path);
       else if (w === 'reveal') api.revealFile(it.dataset.path, '.');
       else if (w === 'remove' && await confirmDanger('Remove this worktree?', `${it.dataset.path} is deleted (its branch is kept).`, 'Remove')) act('Worktree removed', () => G('removeWorktree', { path: it.dataset.path })).then(loadExtras);

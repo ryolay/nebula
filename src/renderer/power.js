@@ -677,7 +677,7 @@ function bindPower() {
       const blk = $('#diffBody .rz-block:not(.done)');
       const k = { 1: 'ours', 2: 'theirs', 3: 'both' }[e.key];
       if (k && blk) { e.preventDefault(); RZ.picks[+blk.dataset.b] = k; return renderResolver(); }
-      if (e.key === 's' && e.metaKey) { e.preventDefault(); $('[data-save-resolution]:not([disabled])')?.click(); }
+      if (e.key === 's' && modKey(e)) { e.preventDefault(); $('[data-save-resolution]:not([disabled])')?.click(); }
       if (e.key === 'Escape') { e.stopPropagation(); closeResolver(); }
     }
   }, true);
@@ -702,7 +702,7 @@ function bindPower() {
     const p = f.dataset.path || f.dataset.resolve;
     const id = await api.menu([
       { id: 'history', label: 'File history' }, { id: 'blame', label: 'Blame', enabled: f.dataset.st !== 'D' && f.dataset.st !== '?' },
-      { type: 'separator' }, { id: 'open', label: 'Open file' }, { id: 'reveal', label: 'Reveal in Finder' }, { id: 'copy', label: 'Copy path' },
+      { type: 'separator' }, { id: 'open', label: 'Open file' }, { id: 'reveal', label: `Reveal in ${FILE_MANAGER}` }, { id: 'copy', label: 'Copy path' },
     ]);
     if (id === 'history') showHistory(p);
     else if (id === 'blame') showBlame(p);

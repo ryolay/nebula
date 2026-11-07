@@ -39,12 +39,20 @@ function setAppearance(patchObj) {
   buildMenu();
 }
 
+const IS_MAC = process.platform === 'darwin';
+const FILE_MANAGER = IS_MAC ? 'Finder' : process.platform === 'win32' ? 'Explorer' : 'File Manager';
+const chromeColors = () => (nativeTheme.shouldUseDarkColors ? { color: '#17181d', symbolColor: '#c9ccd6' } : { color: '#eceef2', symbolColor: '#3a3d47' });
+// The repository tab strip doubles as the title bar: traffic lights on macOS,
+// native window controls drawn over the right edge on Windows and Linux.
+const titleBar = () => (IS_MAC
+  ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 18 } }
+  : { titleBarStyle: 'hidden', titleBarOverlay: { ...chromeColors(), height: 40 }, autoHideMenuBar: true });
+
 function createWindow() {
   nativeTheme.themeSource = appearance().theme;
   win = new BrowserWindow({
     width: 1480, height: 920, minWidth: 1000, minHeight: 600,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 16, y: 18 },
+    ...titleBar(),
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#17181d' : '#eceef2',
     show: false,
     acceptFirstMouse: true, // macOS: the click that focuses the window must also press the button
@@ -127,7 +135,7 @@ function services() {
   const dir = app.getPath('userData');
   const secrets = {
     encrypt: (s) => {
-      if (!safeStorage.isEncryptionAvailable()) throw new Error('macOS keychain encryption is unavailable');
+      if (!safeStorage.isEncryptionAvailable()) throw new Error('Secure storage is unavailable (macOS Keychain, Windows DPAPI or a Linux secret service is required)');
       return safeStorage.encryptString(s).toString('base64');
     },
     decrypt: (b) => safeStorage.decryptString(Buffer.from(b, 'base64')),
@@ -412,16 +420,17 @@ function buildMenu() {
   const recent = (loadState().recent || []).map((p) => ({ label: p, click: () => win?.webContents.send('openPath', p) }));
   const send = (ch) => () => win?.webContents.send('cmd', ch);
   Menu.setApplicationMenu(Menu.buildFromTemplate([
-    { role: 'appMenu' },
+    ...(IS_MAC ? [{ role: 'appMenu' }] : []),
     { label: 'File', submenu: [
       { label: 'New Tab', accelerator: 'CmdOrCtrl+T', click: send('newTab') },
       { label: 'Open Repository…', accelerator: 'CmdOrCtrl+O', click: send('open') },
       { label: 'Open Recent', submenu: recent.length ? recent : [{ label: 'No recent repositories', enabled: false }] },
       { type: 'separator' },
-      { label: 'Reveal in Finder', accelerator: 'CmdOrCtrl+Shift+R', click: send('reveal') },
+      { label: `Reveal in ${FILE_MANAGER}`, accelerator: 'CmdOrCtrl+Shift+R', click: send('reveal') },
       { type: 'separator' },
       { label: 'Close Tab', accelerator: 'CmdOrCtrl+W', click: send('closeTab') },
       { label: 'Close Window', accelerator: 'CmdOrCtrl+Shift+W', role: 'close' },
+      ...(IS_MAC ? [] : [{ type: 'separator' }, { role: 'quit' }]),
     ] },
     { label: 'Edit', submenu: [
       // ⌘Z undoes text edits inside fields, and git actions everywhere else (decided by the renderer)
@@ -453,7 +462,7 @@ function buildMenu() {
     ] },
     { label: 'View', submenu: [
       { label: 'Appearance', submenu: [
-        ...[['system', 'Match macOS'], ['light', 'Light'], ['dark', 'Dark']].map(([id, label]) => ({ label, type: 'radio', checked: appearance().theme === id, click: () => setAppearance({ theme: id }) })),
+        ...[['system', IS_MAC ? 'Match macOS' : 'Match system'], ['light', 'Light'], ['dark', 'Dark']].map(([id, label]) => ({ label, type: 'radio', checked: appearance().theme === id, click: () => setAppearance({ theme: id }) })),
         { type: 'separator' },
         ...ACCENTS.map(([id, label]) => ({ label, type: 'radio', checked: appearance().accent === id, click: () => setAppearance({ accent: id }) })),
       ] },
@@ -467,7 +476,10 @@ function buildMenu() {
 
 app.whenReady().then(async () => {
   services();
-  nativeTheme.on('updated', () => win?.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#17181d' : '#eceef2'));
+  nativeTheme.on('updated', () => {
+    win?.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#17181d' : '#eceef2');
+    if (!IS_MAC) { try { win?.setTitleBarOverlay(chromeColors()); } catch {} }
+  });
   try { systemPreferences.subscribeNotification('AppleColorPreferencesChangedNotification', () => applyAppearance()); } catch {}
   buildMenu();
   createWindow();

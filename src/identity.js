@@ -9,8 +9,10 @@ const { gitAt } = require('./git');
 const PALETTE = ['#8b5cf6', '#22d3ee', '#f472b6', '#a3e635', '#fbbf24', '#fb7185', '#2dd4bf', '#60a5fa'];
 const FREEMAIL = /^(gmail|googlemail|outlook|hotmail|live|icloud|me|mac|yahoo|proton|protonmail|pm|gmx|hey|fastmail|aol)\./i;
 const home = () => os.homedir();
-const expand = (p) => (p ? p.replace(/^~(?=$|\/)/, home()) : p);
-const tilde = (p) => (p && p.startsWith(`${home()}/`) ? `~${p.slice(home().length)}` : p);
+// Git config and OpenSSH accept forward slashes everywhere, including on Windows.
+const slash = (p) => (process.platform === 'win32' && p ? p.replace(/\\/g, '/') : p);
+const expand = (p) => (p ? p.replace(/^~(?=$|[\\/])/, home()) : p);
+const tilde = (p) => { const s = slash(p); const h = slash(home()); return s && s.startsWith(`${h}/`) ? `~${s.slice(h.length)}` : s; };
 const globalConfigPath = () => process.env.GIT_CONFIG_GLOBAL || path.join(home(), '.gitconfig');
 
 // ---------- remotes ----------
@@ -153,8 +155,9 @@ function matchRemote(pattern, remote) {
   return glob(pat).test(`${remote.host}/${remote.path}`);
 }
 function matchFolder(folder, repoPath) {
-  const f = path.resolve(expand(folder)).toLowerCase().replace(/\/+$/, '');
-  const r = path.resolve(repoPath).toLowerCase();
+  const norm = (p) => path.resolve(p).replace(/\\/g, '/').toLowerCase();
+  const f = norm(expand(folder)).replace(/\/+$/, '');
+  const r = norm(repoPath);
   return r === f || r.startsWith(`${f}/`);
 }
 function suggest(profiles, repoPath, remote) {

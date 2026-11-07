@@ -10,10 +10,12 @@ const US = '\x1f';
 const RS = '\x1e';
 
 // Electron apps launched from Finder get a minimal PATH; add the usual spots.
-const EXTRA_PATH = ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/bin'];
+const EXTRA_PATH = process.platform === 'win32'
+  ? ['C:\\Program Files\\Git\\cmd', 'C:\\Program Files\\GitHub CLI']
+  : ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/bin'];
 const ENV = {
   ...process.env,
-  PATH: [...new Set([...(process.env.PATH || '').split(':'), ...EXTRA_PATH])].filter(Boolean).join(':'),
+  PATH: [...new Set([...(process.env.PATH || '').split(path.delimiter), ...EXTRA_PATH])].filter(Boolean).join(path.delimiter),
   GIT_TERMINAL_PROMPT: '0',
   GIT_OPTIONAL_LOCKS: '0',
   GH_PROMPT_DISABLED: '1',
@@ -856,7 +858,7 @@ const asAsync = (o) => Object.fromEntries(Object.entries(o).map(([k, fn]) => [k,
 module.exports = {
   open, info, log, status, refs, stashes, commit, diff, prs,
   ...asAsync(ops), ...asAsync(prOps), ...asAsync(issueOps), issues,
-  setAuthResolver, run, runStream, authEnv, parseConflicts,
+  setAuthResolver, run, runStream, authEnv, parseConflicts, ENV,
   gitAt: (cwd, args, opts = {}) => git(args, { ...opts, cwd }),
   withRepo,
   get repo() { return cur(); },

@@ -4,6 +4,26 @@ const TERM = { open: false, height: 260 };
 try { TERM.height = Math.min(700, Math.max(140, +localStorage.getItem('termHeight') || 260)); } catch {}
 
 /** ANSI palette built from the app's theme tokens so the terminal matches light and dark. */
+/**
+ * Copy/paste conventions. macOS: ⌘C copies the selection, ⌘K clears, ⌘V pastes (Edit menu).
+ * Windows/Linux: Ctrl+Shift+C / Ctrl+Shift+V, and Ctrl+C copies when text is selected
+ * (otherwise it interrupts the running command, as in any terminal).
+ */
+function terminalKey(e, xterm) {
+  if (e.type !== 'keydown') return true;
+  if (IS_MAC) {
+    if (!e.metaKey) return true;
+    if (e.key === 'c' && xterm.hasSelection()) { api.copy(xterm.getSelection()); return false; }
+    if (e.key === 'k') { xterm.clear(); return false; }
+    return true; // other ⌘ shortcuts (tabs, ⌘W…) keep working
+  }
+  if (!e.ctrlKey || e.altKey) return true;
+  const k = e.key.toLowerCase();
+  if (k === 'c' && (e.shiftKey || xterm.hasSelection())) { if (xterm.hasSelection()) api.copy(xterm.getSelection()); return false; }
+  if (k === 'v' && (e.shiftKey || PLATFORM === 'win32')) { navigator.clipboard.readText().then((t) => t && xterm.paste(t)).catch(() => {}); return false; }
+  return true;
+}
+
 function termTheme() {
   const css = getComputedStyle(document.documentElement);
   const v = (n) => css.getPropertyValue(n).trim();
@@ -32,7 +52,7 @@ async function ensureSession(tab) {
   // load the icon font first so xterm measures cells with it available (prompt icons, powerline arrows)
   await document.fonts.load("12px 'Symbols Nerd Font Mono'").catch(() => {});
   const xterm = new Terminal({
-    fontFamily: "'SF Mono', 'Symbols Nerd Font Mono', ui-monospace, Menlo, monospace", fontSize: 12, lineHeight: 1.25, cursorBlink: true,
+    fontFamily: "'SF Mono', Menlo, Consolas, 'Cascadia Mono', 'DejaVu Sans Mono', 'Ubuntu Mono', 'Symbols Nerd Font Mono', monospace", fontSize: 12, lineHeight: 1.25, cursorBlink: true,
     allowProposedApi: false, scrollback: 5000, theme: termTheme(), macOptionIsMeta: true, drawBoldTextInBrightColors: false,
   });
   const fit = new FitAddon.FitAddon();
@@ -51,13 +71,7 @@ async function ensureSession(tab) {
     if (d.includes('\r')) scheduleRefresh(tab); // a command was run: git state may have changed
   });
   xterm.onResize(({ cols, rows }) => api.term.resize(session.id, cols, rows));
-  // macOS conventions: ⌘C copies the selection, ⌘K clears, ⌘V pastes (handled by the Edit menu)
-  xterm.attachCustomKeyEventHandler((e) => {
-    if (e.type !== 'keydown' || !e.metaKey) return true;
-    if (e.key === 'c' && xterm.hasSelection()) { api.copy(xterm.getSelection()); return false; }
-    if (e.key === 'k') { xterm.clear(); return false; }
-    return true; // other ⌘ shortcuts (tabs, ⌘W…) keep working
-  });
+  xterm.attachCustomKeyEventHandler((e) => terminalKey(e, xterm));
   renderTermHeader();
   return tab.term;
 }

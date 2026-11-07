@@ -8,10 +8,31 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+
   test:
-    runs-on: macos-latest
-    timeout-minutes: 20
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,7 +40,54 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npm run test:unit
-      # The end-to-end suite drives the real Electron window.
-      - run: npm run test:e2e
+      - name: Allow the Chromium sandbox (Ubuntu 24.04 AppArmor)
+        if: runner.os == 'Linux'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Configure git
+        run: |
+          git config --global user.name "CI"
+          git config --global user.email "ci@example.com"
+          git config --global core.autocrlf false
+
+      - name: Unit tests
+        if: runner.os != 'Windows'
+        run: npm run test:unit
+      - name: Unit tests (portable subset)
+        if: runner.os == 'Windows'
+        run: npm run test:portable
+
+      - name: End-to-end tests (macOS)
+        if: runner.os == 'macOS'
+        run: npm run test:e2e
+      - name: End-to-end tests (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum npm run test:e2e
+
+      - name: Screenshots
+        if: runner.os != 'Windows'
+        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum ' || '' }}npm run screenshots
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os != 'Windows'
+        with:
+          name: screenshots-${{ runner.os }}
+          path: docs/*.png
+          if-no-files-found: ignore
+
+  package:
+    name: Package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx electron-builder --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false

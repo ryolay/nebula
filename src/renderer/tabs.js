@@ -143,7 +143,7 @@ function bindTabs() {
   });
   $('#tabNew').onclick = () => newTab();
   document.addEventListener('keydown', (e) => {
-    if (e.metaKey && !e.shiftKey && !e.altKey && /^[1-9]$/.test(e.key)) {
+    if (modKey(e) && !e.shiftKey && !e.altKey && /^[1-9]$/.test(e.key)) {
       const t = e.key === '9' ? S.tabs.at(-1) : S.tabs[+e.key - 1];
       if (t) { e.preventDefault(); activateTab(t); }
     }
@@ -360,12 +360,12 @@ function bindToolbar() {
   api.on('git:progress', hudProgress);
 }
 
-// ---------- appearance: accent colour from View › Appearance (or the macOS accent) ----------
+// ---------- appearance: accent colour from View › Appearance (or the system accent) ----------
 const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 const luminance = (rgb) => { const [r, g, b] = rgb.map((v) => v / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 const toHex = (rgb) => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
-/** Any accent (incl. the macOS one) gets a fill that keeps button text at WCAG AA (4.5:1). */
+/** Any accent (incl. the system one) gets a fill that keeps button text at WCAG AA (4.5:1). */
 function applyAccent({ accent } = {}) {
   if (!/^#[0-9a-f]{6}$/i.test(accent || '')) return;
   const base = rgbOf(accent);

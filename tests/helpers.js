@@ -133,7 +133,7 @@ process.stderr.write('git@' + target + ': Permission denied (publickey).\\n'); p
 `, { mode: 0o755 });
 const SSH_DIR = path.join(ROOT, 'dot-ssh');
 process.env.NEBULA_SSH_DIR = SSH_DIR;
-process.env.PATH = `${binDir}:${process.env.PATH}`;
+process.env.PATH = `${binDir}${path.delimiter}${process.env.PATH}`;
 
 const ghLog = () => (fs.existsSync(GH_LOG) ? fs.readFileSync(GH_LOG, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 const ghCalls = () => ghLog().map((l) => l.argv).filter((a) => a[0] !== 'auth');

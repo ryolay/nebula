@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
-const { run } = require('./git');
+const { run, ENV } = require('./git');
 const gitlab = require('./gitlab');
 const { originOf } = require('./identity');
 const { gitAt } = require('./git');
@@ -54,7 +54,7 @@ class Accounts {
     let child, cancelled = false;
     const promise = new Promise((resolve, reject) => {
       child = spawn('gh', args, {
-        env: { ...process.env, PATH: `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin`, BROWSER: 'true', GH_PROMPT_DISABLED: '1' },
+        env: { ...process.env, PATH: ENV.PATH, BROWSER: 'true', GH_PROMPT_DISABLED: '1' },
         stdio: ['ignore', 'pipe', 'pipe'],
       });
       let buf = '', sent = false;

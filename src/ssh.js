@@ -17,7 +17,8 @@ function check(acc) {
 }
 const alias = (acc) => { const { host, login } = check(acc); return `${host}-${login.toLowerCase()}`; };
 const keyFile = (acc) => { const { host, login } = check(acc); return path.join(sshDir(), `nebula_${host}_${login.toLowerCase()}`); };
-const tilde = (p) => (p.startsWith(`${os.homedir()}/`) ? `~${p.slice(os.homedir().length)}` : p);
+const slash = (p) => (process.platform === 'win32' ? p.replace(/\\/g, '/') : p); // OpenSSH on Windows accepts forward slashes
+const tilde = (p) => { const s = slash(p); const h = slash(os.homedir()); return s.startsWith(`${h}/`) ? `~${s.slice(h.length)}` : s; };
 const markers = (acc) => { const { host, login } = check(acc); return [`# >>> nebula: ${host}/${login}`, `# <<< nebula: ${host}/${login}`]; };
 
 function exec(cmd, args, opts = {}) {
