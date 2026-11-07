@@ -62,7 +62,7 @@ function workSetup() {
   const work = real(H.tmpDir('Work'));
   const inc = path.join(path.dirname(globalCfg), '.gitconfig-work-test');
   fs.writeFileSync(inc, '[user]\n\temail = me@company.com\n');
-  gset(`includeIf.gitdir/i:${work}/.path`, inc);
+  gset(`includeIf.gitdir/i:${gitPath(work)}/.path`, inc);
   return { work, inc };
 }
 
