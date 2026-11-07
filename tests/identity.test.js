@@ -73,7 +73,7 @@ test('discover + Profiles: imports global identity and includeIf identities with
   const list = await store.list();
   assert.deepEqual(list.map((p) => [p.label, p.name, p.email, p.folders]), [
     ['Example', 'Test Runner', 'runner@example.com', []],
-    ['Company', 'Test Runner', 'me@company.com', [`${work}/`]],
+    ['Company', 'Test Runner', 'me@company.com', [`${gitPath(work)}/`]],
   ]);
   assert.ok(list.every((p) => p.id && p.color));
   // import happens once: deleting a profile must not resurrect it
