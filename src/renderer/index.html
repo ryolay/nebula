@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Nebula</title>
+  <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Row 1: repository tabs. Only the empty strip (.tab-drag) moves the window — never an ancestor of a control. -->
+  <nav class="tabbar">
+    <div class="tab-traffic tab-drag"></div>
+    <div class="tabs" id="tabs"></div>
+    <button class="tab-new" id="tabNew" title="Open a repository in a new tab (⌘T)" data-icon="plus"></button>
+    <div class="tab-drag tab-fill"></div>
+  </nav>
+
+  <!-- Row 2: toolbar. No drag region at all, so every click lands. -->
+  <header class="topbar">
+    <button class="repo-btn" id="repoBtn" title="Branch — click to switch">
+      <span class="repo-icon" id="repoIcon" data-icon="branch"></span>
+      <span class="repo-text"><small id="repoName">No repository</small><b id="repoBranch">—</b></span>
+      <span data-icon="chevron" class="chev"></span>
+    </button>
+    <button class="id-chip" id="idChip" hidden></button>
+    <div class="toolbar">
+      <button class="tb off" data-act="undo" id="tbUndo" title="Nothing to undo"><span class="tb-ic" data-icon="undo"></span><em>Undo</em></button>
+      <button class="tb off" data-act="redo" id="tbRedo" title="Nothing to redo"><span class="tb-ic" data-icon="redo"></span><em>Redo</em></button>
+      <span class="tb-sep"></span>
+      <div class="tb-split" data-split="pull">
+        <button class="tb" data-act="pull" title="Pull (⌘⇧L)"><span class="tb-ic" data-icon="pull"></span><em>Pull</em><span class="badge" id="behindBadge"></span></button>
+        <button class="tb-caret" data-menu="pull" title="Pull options" data-icon="chevron"></button>
+      </div>
+      <div class="tb-split" data-split="push">
+        <button class="tb" data-act="push" title="Push (⌘⇧P)"><span class="tb-ic" data-icon="push"></span><em>Push</em><span class="badge" id="aheadBadge"></span></button>
+        <button class="tb-caret" data-menu="push" title="Push options" data-icon="chevron"></button>
+      </div>
+      <button class="tb" data-act="fetch" title="Fetch all remotes (⌘⇧F)"><span class="tb-ic" data-icon="fetch"></span><em>Fetch</em></button>
+      <span class="tb-sep"></span>
+      <button class="tb" data-act="branch" title="New branch (⌘B)"><span class="tb-ic" data-icon="branch"></span><em>Branch</em></button>
+      <button class="tb" data-act="stash" title="Stash changes (⌘⇧S)"><span class="tb-ic" data-icon="stash"></span><em>Stash</em></button>
+      <button class="tb" data-act="pop" title="Pop latest stash (⌘⇧O)"><span class="tb-ic" data-icon="pop"></span><em>Pop</em></button>
+      <span class="tb-sep"></span>
+      <button class="tb" data-act="terminal" id="tbTerm" title="Terminal (⌃`)"><span class="tb-ic" data-icon="terminal"></span><em>Terminal</em></button>
+      <button class="tb accent" data-act="pr" title="New pull request"><span class="tb-ic" id="prIcon" data-icon="pr"></span><em id="prLabel">Pull Request</em></button>
+    </div>
+    <div class="search" id="searchBox">
+      <span data-icon="search"></span>
+      <input id="search" placeholder="Search commits, authors, SHA…" spellcheck="false" autocomplete="off">
+      <span class="search-count" id="searchCount"></span>
+      <button class="search-nav" id="searchPrev" title="Previous match (⇧↵)" data-icon="up"></button>
+      <button class="search-nav" id="searchNext" title="Next match (↵)" data-icon="chevron"></button>
+      <kbd id="searchKbd">⌘F</kbd>
+    </div>
+  </header>
+
+  <!-- action HUD: live progress + result of pull / push / fetch / … -->
+  <div class="hud" id="hud" hidden>
+    <div class="hud-ic" id="hudIc"></div>
+    <div class="hud-main"><b id="hudTitle"></b><small id="hudSub"></small><div class="hud-bar"><i id="hudBar"></i></div></div>
+  </div>
+  <div class="popover glass" id="popover" hidden></div>
+  <div class="modal-wrap" id="irbWrap" hidden><div class="sheet glass irb" id="irb"></div></div>
+  <div class="modal-wrap" id="prWrap" hidden><div class="sheet pr" id="pr"></div></div>
+  <!-- Integrated terminal (one shell per repository tab) -->
+  <section class="term-panel" id="termPanel">
+    <div class="term-grip" id="termGrip" title="Drag to resize"></div>
+    <header class="term-h">
+      <div class="term-title" id="termTitle"></div>
+      <button class="btn sm" id="termRestart" hidden>Restart</button>
+      <button class="icon-btn" id="termClear" title="Clear (⌘K)" data-icon="trash"></button>
+      <button class="icon-btn" id="termClose" title="Hide terminal (⌃`)" data-icon="chevron"></button>
+    </header>
+    <div class="term-body" id="termBody"></div>
+  </section>
+  <!-- New tab: recent / open / clone / init -->
+  <div class="launchpad" id="launchpad" hidden></div>
+
+  <div class="layout">
+    <aside class="sidebar glass" id="sidebar">
+      <div class="side-filter"><span data-icon="search"></span><input id="sideFilter" placeholder="Filter" spellcheck="false"></div>
+      <div class="side-scroll" id="sideScroll"></div>
+    </aside>
+
+    <main class="graph-pane glass" id="graphPane">
+      <div class="graph-head" id="graphHead">
+        <div class="col-refs">Branch / Tag</div>
+        <div class="col-graph" id="headGraph">Graph</div>
+        <div class="col-msg">Commit message</div>
+        <div class="col-author">Author</div>
+        <div class="col-date">Date</div>
+        <div class="col-sha">SHA</div>
+      </div>
+      <div class="graph-scroll" id="graphScroll">
+        <div class="graph-content" id="graphContent">
+          <div class="rows" id="rows"></div>
+          <svg class="lanes" id="lanes"></svg>
+          <div class="nodes" id="nodes"></div>
+        </div>
+        <div class="load-more" id="loadMore"><button>Load more commits</button></div>
+      </div>
+      <div class="empty" id="empty">
+        <h1>Welcome to Nebula</h1>
+        <p>A gorgeous Git client. Open a repository to light up its history.</p>
+        <button class="btn primary big" id="emptyOpen"><span data-icon="folder"></span> Open repository</button>
+        <div class="recent" id="recentList"></div>
+      </div>
+
+      <section class="diff-view" id="diffView" hidden>
+        <header>
+          <div class="diff-title"><span class="st" id="diffStatus"></span><span id="diffPath"></span><small id="diffMeta"></small></div>
+          <div class="diff-actions" id="diffActions"></div>
+          <button class="icon-btn" id="diffClose" title="Close (Esc)"><span data-icon="x"></span></button>
+        </header>
+        <div class="diff-body" id="diffBody"></div>
+      </section>
+    </main>
+
+    <aside class="detail glass" id="detail"></aside>
+    <div class="splitter" data-split="side" title="Drag to resize · double-click to reset"></div>
+    <div class="splitter" data-split="detail" title="Drag to resize · double-click to reset"></div>
+  </div>
+
+  <div class="modal-wrap" id="modalWrap" hidden><div class="modal glass" id="modal"></div></div>
+  <div class="modal-wrap" id="sheetWrap" hidden><div class="sheet glass" id="sheet"></div></div>
+  <div class="toasts" id="toasts"></div>
+  <div class="busy" id="busy"><span></span></div>
+
+  <script src="../../node_modules/@xterm/xterm/lib/xterm.js"></script>
+  <script src="../../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+  <script src="icons.js"></script>
+  <script src="graph.js"></script>
+  <script src="app.js"></script>
+  <script src="identities.js"></script>
+  <script src="launchpad.js"></script>
+  <script src="tabs.js"></script>
+  <script src="power.js"></script>
+  <script src="issues.js"></script>
+  <script src="term.js"></script>
+  <script src="pr.js"></script>
+  <script src="panels.js"></script>
+</body>
+</html>
