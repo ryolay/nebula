@@ -1,0 +1,61 @@
+{
+  "name": "nebula-git",
+  "productName": "Nebula",
+  "version": "0.1.0",
+  "description": "A free, open-source alternative to GitKraken: a fast, good-looking Git client for macOS.",
+  "keywords": [
+    "git",
+    "git-client",
+    "gitkraken-alternative",
+    "electron",
+    "macos",
+    "github",
+    "gitlab",
+    "merge-conflicts"
+  ],
+  "homepage": "https://github.com/ryolay/nebula#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryolay/nebula.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ryolay/nebula/issues"
+  },
+  "author": "Christian Da Silva Perez",
+  "main": "src/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-packager . Nebula --platform=darwin --overwrite --out=dist --ignore='^/dist' --ignore='^/tests' --app-bundle-id=dev.nebula.git --asar.unpackDir='node_modules/node-pty'",
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "test:unit": "node --test --test-concurrency=1 tests/backend.test.js tests/graph.test.js tests/identity.test.js tests/ssh.test.js tests/power.test.js tests/issues.test.js tests/pr.test.js",
+    "test:e2e": "node --test tests/e2e.test.js",
+    "rebuild:native": "electron-rebuild -f -w node-pty",
+    "postinstall": "electron-rebuild -f -w node-pty",
+    "lint": "eslint . && jscpd src --min-tokens 60 --threshold 3 --silent",
+    "screenshots": "node scripts/screenshots.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "@electron/rebuild": "^4.2.1",
+    "@eslint/js": "^9.39.5",
+    "electron": "^45.2.3",
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
+    "jscpd": "^4.3.0"
+  },
+  "allowScripts": {
+    "electron@45.2.3": true,
+    "node-pty@1.1.0": true
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^5.5.0",
+    "node-pty": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "private": true
+}
