@@ -37,7 +37,7 @@
     "test:e2e": "node --test tests/e2e.test.js",
     "rebuild:native": "electron-rebuild -f -w node-pty",
     "postinstall": "electron-rebuild -f -w node-pty",
-    "lint": "eslint . && jscpd src --min-tokens 60 --threshold 3 --silent",
+    "lint": "eslint . && stylelint \"src/**/*.css\" && markdownlint-cli2 \"*.md\" \".github/**/*.md\" && jscpd src --min-tokens 60 --threshold 3 --silent",
     "screenshots": "node scripts/screenshots.js",
     "dist:mac": "electron-builder --mac --publish never",
     "dist:win": "electron-builder --win --publish never",
@@ -54,7 +54,9 @@
     "electron-builder": "^26.18.0",
     "eslint": "^9.39.5",
     "globals": "^15.15.0",
-    "jscpd": "^4.3.0"
+    "jscpd": "^4.3.0",
+    "markdownlint-cli2": "^0.18.1",
+    "stylelint": "^16.26.1"
   },
   "allowScripts": {
     "electron@45.2.3": true,

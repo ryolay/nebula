@@ -13,6 +13,8 @@ const TEST_CONFIRM = process.env.NEBULA_SNAPSHOT && process.env.NEBULA_TEST_CONF
 // Tests set NEBULA_NO_EXTERNAL so nothing ever opens the user's real browser.
 const openExternal = (url) => (process.env.NEBULA_NO_EXTERNAL ? Promise.resolve() : shell.openExternal(url));
 if (process.env.NEBULA_USER_DATA) app.setPath('userData', process.env.NEBULA_USER_DATA); // tests: isolated state
+// Tests on a virtual display (Linux CI) have no GPU: software rendering keeps screenshots working.
+if (process.env.NEBULA_SNAPSHOT && process.platform === 'linux') app.disableHardwareAcceleration();
 const statePath = () => path.join(app.getPath('userData'), 'state.json');
 const loadState = () => { try { return JSON.parse(fs.readFileSync(statePath(), 'utf8')); } catch { return { recent: [] }; } };
 const saveState = (s) => { try { fs.mkdirSync(path.dirname(statePath()), { recursive: true }); fs.writeFileSync(statePath(), JSON.stringify(s)); } catch {} };
@@ -496,8 +498,7 @@ app.whenReady().then(async () => {
         } catch (e) { console.log(`NEBULA_EVAL_ERROR ${e.message}`); }
       }
       setTimeout(async () => {
-        const img = await win.webContents.capturePage();
-        fs.writeFileSync(process.env.NEBULA_SNAPSHOT, img.toPNG());
+        try { fs.writeFileSync(process.env.NEBULA_SNAPSHOT, (await win.webContents.capturePage()).toPNG()); } catch (e) { console.log(`NEBULA_CONSOLE capture failed: ${e.message}`); }
         app.quit();
       }, 800);
     }, 2500);

@@ -9,6 +9,8 @@ const H = require('./helpers');
 
 const ELECTRON = require('electron'); // path to the binary when required from node
 const APP = path.join(__dirname, '..');
+// Shortcut labels are written the macOS way; Windows/Linux show Ctrl/Shift names.
+const K = (label) => (process.platform === 'darwin' ? label : label.replace('(⇧⌘Z)', '(Ctrl+Shift+Z)').replace('(⌘Z)', '(Ctrl+Z)'));
 
 function launch(repoArg, evalSrc, { userData = H.tmpDir('userdata'), confirm } = {}) {
   return new Promise((resolve, reject) => {
@@ -591,7 +593,7 @@ test('e2e: tabs + new-tab launchpad — recent, clone from URL, init, ⌘1, clos
     await waitFor(() => S.tab?.info?.name === 'fresh' && S.commits?.length === 1, 'init tab', 15000);
     R.tabsBefore = $$('.tab .tab-name').map((t) => t.textContent);
     // ⌘1 switches to the first tab; ⌘W-equivalent closes the active one
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', metaKey: true, bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', [IS_MAC ? 'metaKey' : 'ctrlKey']: true, bubbles: true }));
     await waitFor(() => S.tab === S.tabs[0] && $$('#rows .row').length, 'cmd+1');
     R.cmd1 = txt('.tab.active .tab-name');
     await closeTab(S.tab);
@@ -673,9 +675,9 @@ test('e2e: conflicts → resolve with keys/whole-file → continue merge → und
   assert.match(R.resolvedText, /port = 8080.*theme = "dark"/);
   assert.match(R.centerDone, /All conflicts resolved/);
   assert.equal(R.afterMergeState, null);
-  assert.equal(R.undoTitle, 'Undo merge of feature (⌘Z)');
+  assert.equal(R.undoTitle, K('Undo merge of feature (⌘Z)'));
   assert.equal(R.afterUndoHead, beforeMerge, 'undo resets to before the merge');
-  assert.equal(R.redoTitle, 'Redo merge of feature (⇧⌘Z)');
+  assert.equal(R.redoTitle, K('Redo merge of feature (⇧⌘Z)'));
   assert.equal(R.afterRedoSubject, 'Merge feature — kept dark config');
   assert.equal(H.read(d, 'config.js'), 'port = 8080\ntheme = "dark"\n');
   assert.equal(H.read(d, 'README.md'), 'v1.1\n');
@@ -747,7 +749,7 @@ test('e2e: hunk & line staging, commit undo/redo, ⌘-click compare, history, bl
   assert.match(R.staged2, /\+CHANGED 27/);
   assert.doesNotMatch(R.staged2, /EXTRA 28/, 'only the selected line was staged');
   assert.match(R.unstaged2, /\+EXTRA 28/, 'the other line stays unstaged');
-  assert.equal(R.commitUndoTitle, 'Undo commit “Edit long.txt” (⌘Z)');
+  assert.equal(R.commitUndoTitle, K('Undo commit “Edit long.txt” (⌘Z)'));
   assert.equal(R.afterUndo.head, 'Port 8080');
   assert.ok(R.afterUndo.files.some((f) => f[0] === 'M'), 'undo keeps the changes staged (soft reset)');
   assert.equal(R.afterRedo, 'Edit long.txt');
@@ -851,7 +853,7 @@ test('e2e: drag a branch onto another → rebase with a conflict → skip; remot
   assert.match(R.op, /Commit 1 of 2/);
   assert.equal(R.hasSkip, true);
   assert.deepEqual(R.afterSkip, ['topic clean', 'main edit', 'base'], 'conflicting commit skipped, the other replayed on main');
-  assert.equal(R.undoTitle, 'Undo rebase onto main (⌘Z)', 'the rebase started by drag & drop is undoable once finished');
+  assert.equal(R.undoTitle, K('Undo rebase onto main (⌘Z)'), 'the rebase started by drag & drop is undoable once finished');
   assert.deepEqual(R.remotes, ['origin', 'upstream']);
   assert.equal(R.worktreeSection, true);
   assert.deepEqual(R.errors, []);
@@ -940,7 +942,7 @@ test('e2e: GitHub issues — list, read, comment, close with comment, create, br
   assert.equal(R.closeLabel, 'Close with comment');
   assert.match(R.newComment, /Fixed in <b>next<\/b> release/);
   assert.equal(R.branch, '7-login-redirects-to-a-blank-page');
-  assert.equal(R.undoTitle, 'Undo create branch 7-login-redirects-to-a-blank-page (⌘Z)');
+  assert.equal(R.undoTitle, K('Undo create branch 7-login-redirects-to-a-blank-page (⌘Z)'));
   assert.equal(R.prBody, 'Closes #7');
   assert.deepEqual(R.prBranches, ['main', '7-login-redirects-to-a-blank-page'], 'the PR form targets the default branch from the issue branch');
   assert.equal(R.branchAfterUndo, 'main');

@@ -7,11 +7,13 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+
 - Windows and Linux support: native window controls, Ctrl-based shortcuts and labels, PowerShell/cmd terminal on Windows, Windows-style paths in identities and SSH config.
 - Installers for every platform (DMG and zip for macOS arm64/x64, NSIS installer and zip for Windows, AppImage, deb and tar.gz for Linux), built and published by CI when a version tag is pushed.
 - CI on macOS, Windows and Linux.
 
 ### Changed
+
 - Packaging moved from electron-packager to electron-builder.
 
 ## [0.1.0] - 2026-11-07
@@ -19,6 +21,7 @@ All notable changes to this project are documented here. The format follows
 First public release.
 
 ### Added
+
 - Commit graph with lanes, avatars, branch/remote/tag labels and search.
 - Staging by file, hunk or line; commit, amend, stash, cherry-pick, revert, reset.
 - Merge conflict resolution (mine / theirs / both per block), continue / skip / abort.

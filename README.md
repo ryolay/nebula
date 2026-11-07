@@ -32,12 +32,14 @@ GitKraken is a great tool, but several of its key features, such as private repo
 ## Features
 
 ### Graph and history
+
 - Commit graph with colored lanes, merge curves and author avatars (GitHub or Gravatar, with initials as a fallback)
 - Branch, remote and tag labels; a WIP row for uncommitted changes
 - Search by message, author or SHA (`⌘F` / `Ctrl+F`)
 - File history (follows renames), blame, and comparison of any two commits or branches
 
 ### Everyday Git
+
 - Stage, unstage and discard changes by file, **by hunk or by line**; commit and amend
 - Branches: create, check out (double-click), merge, rebase, rename, delete
 - **Drag a branch onto another** to merge, rebase, fast-forward or open a pull request
@@ -47,11 +49,13 @@ GitKraken is a great tool, but several of its key features, such as private repo
 - **Undo and redo** (`⌘Z` / `⇧⌘Z`, or `Ctrl+Z` / `Ctrl+Shift+Z`) for commits, merges, pulls, rebases, cherry-picks, resets, checkouts, branches and stashes
 
 ### Power tools
+
 - **Interactive rebase**: pick, reword, squash and drop; drag to reorder
 - Continue, skip or abort for merge, rebase, cherry-pick and revert; no editor ever pops up
 - Remotes, worktrees (each opens in its own tab), submodules and Git LFS
 
 ### GitHub and GitLab
+
 - **Pull requests** connected to your account. Pick the exact base and compare branches, with a live preview of the commits, the files and whether the branches merge cleanly. Set reviewers (people or teams), assignees, labels and a milestone, or open it as a draft. The branch is published for you if needed.
 - PR list, details, checkout and merge. GitLab merge requests work too.
 - **Issues**: list, read (Markdown), comment, assign, close or reopen, create, and **start a branch from an issue**
@@ -61,6 +65,7 @@ GitKraken is a great tool, but several of its key features, such as private repo
 ![Merge conflict resolution](docs/conflicts.png)
 
 ### Workspace
+
 - One tab per repository; the **+** button opens a recent repository, clones from your accounts or a URL, or opens a folder
 - **Integrated terminal** (`Ctrl+\``): your real shell (zsh, bash, PowerShell…) running in the repository, with Nerd Font icons
 - Resizable, collapsible side panels
@@ -80,6 +85,7 @@ Download the installer for your system from the [latest release](https://github.
 Nebula needs [Git](https://git-scm.com). The [GitHub CLI](https://cli.github.com) is optional and enables the GitHub features.
 
 The builds are not code-signed yet, so the first launch needs one extra step:
+
 - **macOS:** right-click the app › **Open**, or run `xattr -dr com.apple.quarantine /Applications/Nebula.app`.
 - **Windows:** in the SmartScreen dialog, click **More info** › **Run anyway**.
 - **Linux (AppImage):** `chmod +x Nebula-*.AppImage`, then run it.
@@ -115,7 +121,7 @@ CI runs on macOS, Windows and Linux for every pull request, and pushing a `v*` t
 
 ### Architecture
 
-```
+```text
 src/
   main.js        Electron main process: window, menus, IPC
   preload.js     the narrow bridge the UI is allowed to call
