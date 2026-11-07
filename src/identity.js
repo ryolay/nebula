@@ -13,6 +13,11 @@ const home = () => os.homedir();
 const slash = (p) => (process.platform === 'win32' && p ? p.replace(/\\/g, '/') : p);
 const expand = (p) => (p ? p.replace(/^~(?=$|[\\/])/, home()) : p);
 const tilde = (p) => { const s = slash(p); const h = slash(home()); return s && s.startsWith(`${h}/`) ? `~${s.slice(h.length)}` : s; };
+/** Same file? Resolves symlinks and Windows short (8.3) names; case-insensitive on Windows. */
+function samePath(a, b) {
+  const norm = (p) => { let r; try { r = fs.realpathSync.native(p); } catch { r = path.resolve(p); } return process.platform === 'win32' ? r.toLowerCase() : r; };
+  return norm(a) === norm(b);
+}
 const globalConfigPath = () => process.env.GIT_CONFIG_GLOBAL || path.join(home(), '.gitconfig');
 
 // ---------- remotes ----------
@@ -51,7 +56,7 @@ async function effective(repo) {
     if (!out) return null;
     const [scope, origin, ...v] = out.split('\t');
     const file = origin.replace(/^file:/, '');
-    return { scope, file: tilde(file), value: v.join('\t'), included: scope === 'global' && path.resolve(expand(file)) !== path.resolve(globalConfigPath()) };
+    return { scope, file: tilde(file), value: v.join('\t'), included: scope === 'global' && !samePath(expand(file), globalConfigPath()) };
   };
   const [name, email, signingKey, gpgsign, pinned] = await Promise.all(['user.name', 'user.email', 'user.signingkey', 'commit.gpgsign', 'nebula.identity'].map(get));
   return { name, email, signingKey, sign: gpgsign?.value === 'true', profileId: pinned?.value || null };

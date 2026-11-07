@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
 const H = require('./helpers'); // sets isolated GIT_CONFIG_GLOBAL + fake gh first
@@ -8,7 +9,9 @@ const git = require('../src/git');
 const identity = require('../src/identity');
 const { Accounts } = require('../src/accounts');
 
-const real = (d) => fs.realpathSync(d);
+const real = (d) => fs.realpathSync.native(d);
+// How Nebula writes a folder into git config: forward slashes, ~ for the home folder.
+const gitPath = (p) => { const s = p.replace(/\\/g, '/'); const h = os.homedir().replace(/\\/g, '/'); return s.startsWith(`${h}/`) ? `~${s.slice(h.length)}` : s; };
 const globalCfg = process.env.GIT_CONFIG_GLOBAL;
 const gset = (...a) => H.sh(H.ROOT, ['config', '--global', ...a]);
 const secrets = { encrypt: (s) => `enc:${Buffer.from(s).toString('base64')}`, decrypt: (s) => Buffer.from(s.slice(4), 'base64').toString() };
@@ -140,7 +143,7 @@ test('folderRule: plan is shown first, apply writes an includeIf that git itself
 
   await identity.folderRule(p, folder, { apply: true });
   await identity.folderRule(p, folder, { apply: true }); // re-applying does not duplicate
-  assert.equal(H.sh(H.ROOT, ['config', '--global', '--get-all', `includeIf.gitdir/i:${folder}/.path`]).trim().split('\n').length, 1);
+  assert.equal(H.sh(H.ROOT, ['config', '--global', '--get-all', `includeIf.gitdir/i:${gitPath(folder)}/.path`]).trim().split('\n').length, 1);
   const repo = path.join(folder, 'site');
   fs.mkdirSync(repo);
   H.sh(repo, ['init', '-q']);
@@ -167,7 +170,7 @@ test('suggest(): remote rules win over folder rules; mismatch detection', async 
 });
 
 // ---------------------------------------------------------------- GitHub accounts via gh
-test('Accounts.github lists every gh account; token per account', async () => {
+test('Accounts.github lists every gh account; token per account', { skip: H.POSIX_ONLY }, async () => {
   H.setGhAccounts([
     { host: 'github.com', login: 'perso', token: 'tok-perso', active: true },
     { host: 'github.com', login: 'work', token: 'tok-work', active: false },
@@ -182,7 +185,7 @@ test('Accounts.github lists every gh account; token per account', async () => {
   assert.deepEqual(await acc.list(), [], 'no gh accounts → empty list, not an error');
 });
 
-test('githubLogin: device code is surfaced, new account added, previous active account restored', async () => {
+test('githubLogin: device code is surfaced, new account added, previous active account restored', { skip: H.POSIX_ONLY }, async () => {
   H.setGhAccounts([{ host: 'github.com', login: 'perso', token: 'tok-perso', active: true }]);
   const acc = new Accounts(H.tmpDir('userdata'), secrets);
   let code;
@@ -194,14 +197,14 @@ test('githubLogin: device code is surfaced, new account added, previous active a
   assert.deepEqual(st.map((a) => [a.login, a.active]), [['perso', true], ['work', false]], 'global gh active account unchanged');
 });
 
-test('githubLogin can be cancelled; invalid hosts rejected', async () => {
+test('githubLogin can be cancelled; invalid hosts rejected', { skip: H.POSIX_ONLY }, async () => {
   const acc = new Accounts(H.tmpDir('userdata'), secrets);
   const { promise, cancel } = acc.githubLogin('github.com', () => cancel());
   await assert.rejects(promise, /cancel/i);
   assert.throws(() => acc.githubLogin('evil.com; rm -rf /'), /Invalid host/);
 });
 
-test('resolve(): automatic = gh active account; pinned per repo; pinned-but-gone flagged', async () => {
+test('resolve(): automatic = gh active account; pinned per repo; pinned-but-gone flagged', { skip: H.POSIX_ONLY }, async () => {
   H.setGhAccounts([
     { host: 'github.com', login: 'perso', token: 'tok-perso', active: true },
     { host: 'github.com', login: 'work', token: 'tok-work', active: false },
@@ -236,7 +239,7 @@ test('resolve(): automatic = gh active account; pinned per repo; pinned-but-gone
 });
 
 // ---------------------------------------------------------------- token injection into git network commands
-test('fetch/push use the routed account token via http.extraheader (never argv or disk)', async () => {
+test('fetch/push use the routed account token via http.extraheader (never argv or disk)', { skip: H.POSIX_ONLY }, async () => {
   const seen = [];
   const server = http.createServer((req, res) => { seen.push(req.headers.authorization || null); res.writeHead(404); res.end(); });
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
