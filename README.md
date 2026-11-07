@@ -59,7 +59,7 @@ GitKraken is a great tool, but several of its key features, such as private repo
 - **Pull requests** connected to your account. Pick the exact base and compare branches, with a live preview of the commits, the files and whether the branches merge cleanly. Set reviewers (people or teams), assignees, labels and a milestone, or open it as a draft. The branch is published for you if needed.
 - PR list, details, checkout and merge. GitLab merge requests work too.
 - **Issues**: list, read (Markdown), comment, assign, close or reopen, create, and **start a branch from an issue**
-- Multiple GitHub accounts (including Enterprise) through `gh`, and GitLab accounts through tokens encrypted by the system keychain (macOS Keychain, Windows DPAPI, Linux Secret Service)
+- Multiple GitHub accounts (including Enterprise) through `gh`, and GitLab accounts through tokens encrypted by the system keychain (macOS Keychain, Windows Data Protection API, Linux Secret Service)
 - **One-click SSH** for each account: Nebula generates the key, adds a host alias to `~/.ssh/config`, uploads the public key and checks the connection
 
 ![Merge conflict resolution](docs/conflicts.png)

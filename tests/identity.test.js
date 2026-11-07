@@ -46,7 +46,8 @@ test('rules: remote globs and folder matching', () => {
   assert.ok(identity.matchRemote('gitlab.com/team/**', identity.parseRemote('git@gitlab.com:team/a/b/c.git')));
   assert.ok(identity.matchRemote('gitlab.com/team/*', identity.parseRemote('git@gitlab.com:team/a/b/c.git')), 'a rule on a group also covers its subgroups');
   assert.ok(identity.matchFolder('/Users/x/Work', '/Users/x/Work/proj'));
-  assert.ok(identity.matchFolder('/Users/x/Work/', '/users/x/work/proj'), 'case-insensitive like APFS');
+  // Case-insensitive where the file system is (APFS, NTFS), case-sensitive on Linux.
+  assert.equal(identity.matchFolder('/Users/x/Work/', '/users/x/work/proj'), process.platform !== 'linux');
   assert.ok(!identity.matchFolder('/Users/x/Work', '/Users/x/Workshop/proj'), 'no prefix false-positive');
 });
 

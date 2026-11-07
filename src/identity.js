@@ -161,8 +161,10 @@ function matchRemote(pattern, remote) {
   const pat = pattern.replace(/^https?:\/\//i, '').replace(/\.git$/i, '').replace(/\/+$/, '');
   return glob(pat).test(`${remote.host}/${remote.path}`);
 }
+// macOS (APFS) and Windows (NTFS) compare paths case-insensitively by default; Linux does not.
+const CASE_INSENSITIVE_FS = process.platform !== 'linux';
 function matchFolder(folder, repoPath) {
-  const norm = (p) => path.resolve(p).replace(/\\/g, '/').toLowerCase();
+  const norm = (p) => { const s = path.resolve(p).replace(/\\/g, '/'); return CASE_INSENSITIVE_FS ? s.toLowerCase() : s; };
   const f = norm(expand(folder)).replace(/\/+$/, '');
   const r = norm(repoPath);
   return r === f || r.startsWith(`${f}/`);

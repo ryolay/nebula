@@ -3,27 +3,36 @@
 const TERM = { open: false, height: 260 };
 try { TERM.height = Math.min(700, Math.max(140, +localStorage.getItem('termHeight') || 260)); } catch {}
 
-/** ANSI palette built from the app's theme tokens so the terminal matches light and dark. */
+/** macOS: ⌘C copies the selection, ⌘K clears; ⌘V pastes through the Edit menu. */
+function macTerminalKey(e, xterm) {
+  if (!e.metaKey) return true;
+  if (e.key === 'c' && xterm.hasSelection()) { api.copy(xterm.getSelection()); return false; }
+  if (e.key === 'k') { xterm.clear(); return false; }
+  return true; // other ⌘ shortcuts (tabs, ⌘W…) keep working
+}
+
 /**
- * Copy/paste conventions. macOS: ⌘C copies the selection, ⌘K clears, ⌘V pastes (Edit menu).
- * Windows/Linux: Ctrl+Shift+C / Ctrl+Shift+V, and Ctrl+C copies when text is selected
- * (otherwise it interrupts the running command, as in any terminal).
+ * Windows/Linux: Ctrl+Shift+C / Ctrl+Shift+V everywhere; Ctrl+C copies only when text is
+ * selected (otherwise it interrupts the running command) and Ctrl+V pastes on Windows.
  */
-function terminalKey(e, xterm) {
-  if (e.type !== 'keydown') return true;
-  if (IS_MAC) {
-    if (!e.metaKey) return true;
-    if (e.key === 'c' && xterm.hasSelection()) { api.copy(xterm.getSelection()); return false; }
-    if (e.key === 'k') { xterm.clear(); return false; }
-    return true; // other ⌘ shortcuts (tabs, ⌘W…) keep working
-  }
+function pcTerminalKey(e, xterm) {
   if (!e.ctrlKey || e.altKey) return true;
   const k = e.key.toLowerCase();
-  if (k === 'c' && (e.shiftKey || xterm.hasSelection())) { if (xterm.hasSelection()) api.copy(xterm.getSelection()); return false; }
-  if (k === 'v' && (e.shiftKey || PLATFORM === 'win32')) { navigator.clipboard.readText().then((t) => t && xterm.paste(t)).catch(() => {}); return false; }
+  if (k === 'c' && (e.shiftKey || xterm.hasSelection())) {
+    if (xterm.hasSelection()) api.copy(xterm.getSelection());
+    return false;
+  }
+  if (k === 'v' && (e.shiftKey || PLATFORM === 'win32')) {
+    navigator.clipboard.readText().then((t) => t && xterm.paste(t)).catch(() => {});
+    return false;
+  }
   return true;
 }
 
+/** Copy/paste conventions of the current platform; returns false when the key was handled. */
+const terminalKey = (e, xterm) => e.type !== 'keydown' || (IS_MAC ? macTerminalKey(e, xterm) : pcTerminalKey(e, xterm));
+
+/** ANSI palette built from the app's theme tokens so the terminal matches light and dark. */
 function termTheme() {
   const css = getComputedStyle(document.documentElement);
   const v = (n) => css.getPropertyValue(n).trim();
