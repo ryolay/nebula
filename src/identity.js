@@ -55,7 +55,9 @@ async function effective(repo) {
     const out = (await gitAt(repo, ['config', '--show-origin', '--show-scope', '--get', key], { ok: [0, 1] })).replace(/\n$/, '');
     if (!out) return null;
     const [scope, origin, ...v] = out.split('\t');
-    const file = origin.replace(/^file:/, '');
+    // git C-quotes origins with special characters, e.g. file:"C:\\Users\\me\\.gitconfig" on Windows
+    const raw = origin.replace(/^file:/, '');
+    const file = raw.startsWith('"') ? raw.slice(1, -1).replace(/\\(.)/g, '$1') : raw;
     return { scope, file: tilde(file), value: v.join('\t'), included: scope === 'global' && !samePath(expand(file), globalConfigPath()) };
   };
   const [name, email, signingKey, gpgsign, pinned] = await Promise.all(['user.name', 'user.email', 'user.signingkey', 'commit.gpgsign', 'nebula.identity'].map(get));

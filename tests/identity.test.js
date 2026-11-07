@@ -304,7 +304,7 @@ test('GitLab accounts: token validated, stored encrypted, listed, removed', asyn
     assert.equal(a.token, undefined, 'token never returned to the UI');
     const raw = fs.readFileSync(path.join(dir, 'accounts.json'), 'utf8');
     assert.doesNotMatch(raw, /glpat-good/, 'stored encrypted');
-    assert.equal((fs.statSync(path.join(dir, 'accounts.json')).mode & 0o777), 0o600);
+    if (process.platform !== 'win32') assert.equal((fs.statSync(path.join(dir, 'accounts.json')).mode & 0o777), 0o600); // no POSIX modes on Windows
     assert.equal(await acc.token(a.id), 'glpat-good');
     assert.deepEqual((await acc.list()).map((x) => x.id), [a.id]);
     acc.gitlabRemove(a.id);
