@@ -107,7 +107,10 @@
         }
       ],
       "category": "public.app-category.developer-tools",
-      "identity": null
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "win": {
       "target": [
@@ -155,6 +158,9 @@
       "maintainer": "Christian Da Silva Perez <28789550+ryolay@users.noreply.github.com>",
       "synopsis": "A free, open-source Git client"
     },
-    "publish": null
+    "publish": null,
+    "dmg": {
+      "sign": false
+    }
   }
 }
