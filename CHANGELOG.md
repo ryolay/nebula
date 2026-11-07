@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-07
+
 ### Added
 
 - Windows and Linux support: native window controls, Ctrl-based shortcuts and labels, PowerShell/cmd terminal on Windows, Windows-style paths in identities and SSH config.
@@ -15,6 +17,8 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 
 - Packaging moved from electron-packager to electron-builder.
+- Electron 45.
+- Folder rules are case-sensitive on Linux.
 
 ## [0.1.0] - 2026-11-07
 
@@ -33,5 +37,6 @@ First public release.
 - Repository tabs, launchpad (recent / clone / open), integrated terminal.
 - Light and dark themes, accent colors, resizable panels.
 
-[Unreleased]: https://github.com/ryolay/nebula/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ryolay/nebula/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ryolay/nebula/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/ryolay/nebula/releases/tag/v0.1.0
