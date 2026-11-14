@@ -66,7 +66,7 @@ jobs:
       - name: Screenshots
         if: runner.os != 'Windows'
         run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum ' || '' }}npm run screenshots
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always() && runner.os != 'Windows'
         with:
           name: screenshots-${{ runner.os }}
